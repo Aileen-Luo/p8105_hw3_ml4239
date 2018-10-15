@@ -178,3 +178,94 @@ instacart %>%
 ```
 
 **Comments** Based on the table, we can tell that every day people tend to order Pink Lady Apples at arbound 11:00 to 14:30 and order Coffee Ice Cream at around 12:30 to 15:30. And the mean hour does not change a lot among different days in the week. 
+
+
+#P.3
+
+```{r}
+data("ny_noaa")
+str(ny_noaa)
+ny_noaa 
+
+prop_tmax<-sum(is.na(ny_noaa$tmax))/nrow(ny_noaa)
+prop_prcp<-sum(is.na(ny_noaa$prcp))/nrow(ny_noaa)
+prop_snow<-sum(is.na(ny_noaa$snow))/nrow(ny_noaa)
+prop_snwd<-sum(is.na(ny_noaa$snwd))/nrow(ny_noaa)
+prop_tmin<-sum(is.na(ny_noaa$tmin))/nrow(ny_noaa)
+
+```
+**Comments** The dimensional of this dataset is `r dim(ny_noaa)`. And the key variables include station id, date of observation, precipitation, snowfall(mm), snow depth(mm), maximum temperature and minimum temprature on each day (both in tenths of degree C) from 1981-11-01 to 2010-12-31. There are many missing values in each variables: the proportion of missing value in tmin is `r prop_tmin` .The proportion of missing value in tmax is `r prop_tmax`. The proportion of missing value in prcp is `r prop_prcp`. The proportion of missing value in snwd is `r prop_snwd`. The proportion of missing value in snow is `r prop_snow`. From which we can tell that most of the stations only record precipitation but half of them missing the data about tmax and tmin. This is an issue.
+
+##3.1
+Do some data cleaning. Create separate variables for year, month, and day. Ensure observations for temperature, precipitation, and snowfall are given in reasonable units. For snowfall, what are the most commonly observed values? Why?
+
+```{r}
+ny_tidy<-ny_noaa %>% 
+  separate(col = date, into = c("year", "month", "day"), sep = '-') %>% 
+    mutate(tmax_c = as.numeric(tmax) /10,
+         tmin_c = as.numeric(tmin) /10,
+         prcp = as.numeric(prcp)/10,
+         snow = as.numeric(snow),
+         snwd = as.numeric(snwd)) 
+ny_tidy %>% 
+  count(snow) %>% 
+  arrange(desc(n))
+```
+**Comments** the most commonly observed value for snowfall is 0 because snow occurs only in winter.  Most of the time in a year there will not be snow.
+
+##3.2
+Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
+
+```{r}
+ny_tidy %>% 
+  filter(month%in% c("01", "07")) %>% 
+  group_by(id, year, month) %>% 
+  summarise(ave_tmax = mean(tmax_c)) %>% 
+  ggplot(aes( x = year, y = ave_tmax, color = id,group = id))+
+  geom_point(alpha = 0.5)+
+  geom_line(alpha = 0.2)+
+  facet_grid(~ month)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 0.5, vjust = 0.5,size = 8),legend.position = "none")+
+  labs(
+    title = "Average max temperature in January and July in each station across years",
+    x = "Year",
+    y = "Average max temperature (˚C)"
+  )
+```
+**Comments** 
+In January the average max temperature in each station across the year is around 0 Celsius. In July the average max temperature in each station across the year is around 26 Celsius. There are some outliers such as 1982 January, 1984 July and 1988 July etc. 
+
+##3.3
+
+Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
+```{r}
+hex<-ny_tidy %>% 
+  ggplot(aes(x = tmax_c, y = tmin_c)) +
+  geom_hex() + 
+  theme(legend.position = "bottom") +
+  labs(
+    title = "tmax_c vs tmin_c",
+    x = "maximum temperature (˚C)",
+    y = "minimum temperature (˚C)"
+  )
+
+ridges<-ny_tidy %>%
+  filter(snow < 100 & snow > 0) %>% 
+  ggplot(aes(x = snow, y = year))+
+  geom_density_ridges()+
+  labs(
+    title = "density plot of snowfall across years",
+    x = "snow fall (mm)",
+    y = "year"
+  )
+ 
+hex+ridges      
+```
+
+
+**Comment**
+In the first panel we can see there are some outliers far from the center but most of the tmin_c and tmax_x are in the middle of the plot. 
+  
+In the second panel we can see there is no huge difference between the distribution of snowfall across the years. It mostly lies between 0 and 100.
+
