@@ -1,0 +1,16 @@
+---
+title: "p8105_hw3_ml4239"
+Author: "Man Luo"
+Date: 2018-10-15
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(tidyr)
+library(ggridges)
+library(patchwork)
+library(ggExtra)
+```
